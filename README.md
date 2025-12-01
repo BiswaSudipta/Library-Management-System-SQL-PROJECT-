@@ -3,7 +3,7 @@
 
 # 📚 **Library Management System – SQL Project**
 
-![Intro](Picture/From_Data_to_Decision.png)
+![Intro](Picture/Data_to_Decision.png)
 
 ---
 
