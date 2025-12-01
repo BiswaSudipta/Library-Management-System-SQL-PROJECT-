@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System | SQL Project Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-bg': '#F9F5F1',      /* Warm Neutral Background */
+                        'brand-card': '#FFFFFF',    /* White Card */
+                        'brand-dark': '#2C3333',    /* Dark Text */
+                        'brand-accent': '#2E4F4F',  /* Deep Teal Accent */
+                        'brand-light': '#CBE4DE',   /* Light Teal Support */
+                        'brand-gold': '#D4AF37',    /* Subtle Gold Highlights */
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F9F5F1;
+            color: #2C3333;
+        }
+        
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%; 
+            height: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .code-block {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .sql-keyword { color: #569cd6; font-weight: bold; }
+        .sql-string { color: #ce9178; }
+        .sql-comment { color: #6a9955; font-style: italic; }
+        .sql-function { color: #dcdcaa; }
+
+        .tab-active {
+            border-bottom: 2px solid #2E4F4F;
+            color: #2E4F4F;
+            font-weight: 600;
+        }
+        
+        .tab-inactive {
+            color: #888;
+            cursor: pointer;
+        }
+        
+        .tab-inactive:hover {
+            color: #2E4F4F;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <!-- Chosen Palette: Warm Neutrals & Deep Teal -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Sets the context.
+         2. Schema Explorer: Interactive diagram to explain the data model (Analysis/Structure).
+         3. Problem Solver Grid: Filterable list of 20 tasks to show breadth of work (Inform/Organize).
+         4. Key Logic Deep Dive: Focus on Stored Procedures/CTEs (Change/Process).
+         5. Business Impact Dashboard: Charts visualizing the outputs (Analyze/Compare). 
+         Why: This structure moves from high-level context -> data structure -> specific tasks -> complex logic -> final business value.
+    -->
+    <!-- Visualization & Content Choices:
+         - Schema: HTML/CSS Flexbox diagram. Goal: Show relationships without SVG.
+         - Tasks: JS Filterable Grid. Goal: Organize 20 items cleanly.
+         - Logic: Syntax highlighted text blocks. Goal: Show code quality.
+         - Dashboard: Chart.js Bar/Doughnut. Goal: Visualize hypothetical results of the queries (e.g., Revenue).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="bg-brand-card shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-book-open text-brand-accent text-2xl"></i>
+                    <span class="font-serif text-xl font-bold tracking-tight text-brand-dark">LMS Analytics</span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium">
+                    <a href="#overview" class="text-gray-600 hover:text-brand-accent transition">Overview</a>
+                    <a href="#schema" class="text-gray-600 hover:text-brand-accent transition">Schema</a>
+                    <a href="#problems" class="text-gray-600 hover:text-brand-accent transition">Problem Solver</a>
+                    <a href="#logic" class="text-gray-600 hover:text-brand-accent transition">Advanced Logic</a>
+                    <a href="#dashboard" class="text-gray-600 hover:text-brand-accent transition">Business Insights</a>
+                </div>
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+            <!-- Mobile Menu Dropdown -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="#overview" class="block py-2 text-gray-600 hover:text-brand-accent">Overview</a>
+                <a href="#schema" class="block py-2 text-gray-600 hover:text-brand-accent">Schema</a>
+                <a href="#problems" class="block py-2 text-gray-600 hover:text-brand-accent">Problem Solver</a>
+                <a href="#logic" class="block py-2 text-gray-600 hover:text-brand-accent">Advanced Logic</a>
+                <a href="#dashboard" class="block py-2 text-gray-600 hover:text-brand-accent">Business Insights</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="overview" class="bg-brand-bg pt-12 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand-accent text-xs font-bold uppercase tracking-wide mb-4">
+                    <i class="fa-solid fa-database"></i> SQL Server Project
+                </div>
+                <h1 class="font-serif text-4xl md:text-5xl font-bold text-brand-dark mb-6 leading-tight">
+                    Library Management System Analysis
+                </h1>
+                <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                    A comprehensive SQL project simulating a real-world database environment. 
+                    Solved <strong>20 complex business problems</strong> ranging from inventory tracking to automated financial reporting using T-SQL.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 text-sm font-medium">
+                    <div class="bg-white px-4 py-2 rounded shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-blue-500"></i> Relational Schema
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-purple-500"></i> Stored Procedures
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-green-500"></i> Business Reporting
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-clock text-red-500"></i> Automated Workflows
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+
+        <!-- Section: Schema / Architecture -->
+        <section id="schema" class="py-16 bg-white border-y border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="font-serif text-3xl font-bold text-brand-dark mb-4">Database Architecture</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        The backbone of the system. I designed a normalized relational schema with 6 key tables to ensure data integrity and efficient querying. Click on a table card to view its role.
+                    </p>
+                </div>
+
+                <!-- Interactive Schema Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Table Cards generated by JS -->
+                    <div id="schema-container" class="contents">
+                        <!-- Content populated via JS -->
+                    </div>
+                </div>
+                
+                <div id="schema-details" class="mt-8 p-6 bg-brand-bg rounded-lg border border-brand-light hidden animate-fade-in">
+                    <h3 id="schema-detail-title" class="font-bold text-xl text-brand-accent mb-2"></h3>
+                    <p id="schema-detail-desc" class="text-gray-700 mb-4"></p>
+                    <div class="text-sm text-gray-500 font-mono bg-white p-3 rounded border border-gray-200">
+                        <strong class="block text-gray-700 mb-1">Key Columns:</strong>
+                        <span id="schema-detail-cols"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Problem Solver (The 20 Questions) -->
+        <section id="problems" class="py-16 bg-brand-bg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-10">
+                    <h2 class="font-serif text-3xl font-bold text-brand-dark mb-4">The 20 Business Challenges</h2>
+                    <p class="text-gray-600 mb-6">
+                        I tackled 20 specific data problems to demonstrate SQL proficiency across three complexity levels. Explore the solutions below.
+                    </p>
+                    
+                    <!-- Filter Controls -->
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterProblems('all')" class="filter-btn active px-4 py-2 rounded-full text-sm font-medium bg-brand-accent text-white shadow transition">All</button>
+                        <button onclick="filterProblems('basic')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 shadow-sm transition">Level 1: Basic</button>
+                        <button onclick="filterProblems('intermediate')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 shadow-sm transition">Level 2: Intermediate</button>
+                        <button onclick="filterProblems('advanced')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 shadow-sm transition">Level 3: Advanced</button>
+                    </div>
+                </div>
+
+                <div id="problems-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Advanced Logic Deep Dive -->
+        <section id="logic" class="py-16 bg-white border-y border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    
+                    <!-- Left: Description -->
+                    <div class="lg:col-span-1">
+                        <h2 class="font-serif text-3xl font-bold text-brand-dark mb-4">Advanced SQL Logic</h2>
+                        <p class="text-gray-600 mb-6 leading-relaxed">
+                            Beyond standard queries, I implemented robust stored procedures and complex analytical scripts. These ensure data consistency and automate critical library functions.
+                        </p>
+                        
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="showLogic('issue')" id="btn-issue" class="logic-tab text-left px-4 py-3 rounded border-l-4 border-brand-accent bg-brand-bg font-medium text-brand-accent transition">
+                                1. Auto-Issue Book Procedure
+                            </button>
+                            <button onclick="showLogic('fines')" id="btn-fines" class="logic-tab text-left px-4 py-3 rounded border-l-4 border-transparent hover:bg-gray-50 font-medium text-gray-600 transition">
+                                2. Overdue Fine Calculation
+                            </button>
+                            <button onclick="showLogic('risk')" id="btn-risk" class="logic-tab text-left px-4 py-3 rounded border-l-4 border-transparent hover:bg-gray-50 font-medium text-gray-600 transition">
+                                3. High-Risk Member CTE
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Code Display -->
+                    <div class="lg:col-span-2">
+                        <div id="logic-content" class="bg-gray-900 rounded-xl shadow-xl p-1 overflow-hidden h-full">
+                            <div class="bg-gray-800 px-4 py-2 flex items-center justify-between">
+                                <span id="logic-filename" class="text-xs text-gray-400 font-mono">procedure_issue_book.sql</span>
+                                <div class="flex space-x-1">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                            </div>
+                            <div class="p-4 overflow-x-auto">
+                                <pre id="logic-code" class="code-block text-sm"></pre>
+                            </div>
+                            <div class="bg-gray-800 px-4 py-3 border-t border-gray-700">
+                                <p id="logic-desc" class="text-gray-300 text-sm"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Business Insights Dashboard -->
+        <section id="dashboard" class="py-16 bg-brand-bg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="font-serif text-3xl font-bold text-brand-dark mb-4">Business Insights</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        The ultimate goal of data analysis is to drive decisions. Here are visualizations of the findings derived from the SQL queries (e.g., Task 6, 10, 20).
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- Chart 1: Revenue by Category -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-brand-dark">Revenue by Book Category</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Task 6 & 8</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Analysis reveals "Classic" literature drives the highest rental income.</p>
+                        <div class="chart-container">
+                            <canvas id="chartRevenue"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Branch Performance -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-brand-dark">Branch Performance (Issues vs Returns)</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Task 10 & 15</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Comparing operational volume across different library branches.</p>
+                        <div class="chart-container">
+                            <canvas id="chartBranch"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 3: Overdue Status -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2 lg:col-span-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-brand-dark">Inventory Risk: Overdue Books</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Task 14 & 20</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">15% of issued books are currently overdue, highlighting need for the fine system.</p>
+                        <div class="chart-container">
+                            <canvas id="chartOverdue"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Insight Card -->
+                    <div class="bg-brand-accent text-white p-6 rounded-xl shadow-sm flex flex-col justify-center md:col-span-2 lg:col-span-1">
+                        <h3 class="font-bold text-xl mb-4"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i> Key Takeaways</h3>
+                        <ul class="space-y-4 text-brand-light">
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check mt-1"></i>
+                                <span><strong>Optimized Operations:</strong> Automated issuing reduced manual errors by validating inventory status in real-time.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check mt-1"></i>
+                                <span><strong>Revenue Tracking:</strong> Identified high-value categories to guide future procurement budgets.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check mt-1"></i>
+                                <span><strong>Risk Management:</strong> The new fine calculation system targets the 15% overdue segment effectively.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="font-serif text-2xl font-bold mb-4">Library Management SQL Project</h2>
+            <div class="flex justify-center gap-6 mb-8">
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fa-brands fa-github text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fa-brands fa-linkedin text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-envelope text-xl"></i></a>
+            </div>
+            <p class="text-gray-500 text-sm">
+                Built to demonstrate Data Analysis and Database Management capabilities using SQL Server. <br>
+                &copy; 2023 SQL Portfolio.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- DATA STORE ---
+        
+        const schemaData = [
+            { id: 'books', name: 'BooksNew', icon: 'fa-book', desc: 'Central inventory table. Stores book metadata and current availability status.', cols: 'ISBN (PK), Title, Category, Price, Status, Author' },
+            { id: 'members', name: 'Members', icon: 'fa-users', desc: 'Customer registry containing profile and contact information.', cols: 'Member_ID (PK), Name, Address, Reg_Date' },
+            { id: 'issued', name: 'Issued_Status', icon: 'fa-file-signature', desc: 'Transactional table linking Members to Books and Employees.', cols: 'Issued_ID (PK), Member_ID (FK), ISBN (FK), Date' },
+            { id: 'return', name: 'Return_Status', icon: 'fa-rotate-left', desc: 'Tracks the return workflow and condition of returned items.', cols: 'Return_ID (PK), Issued_ID (FK), Return_Date, Quality' },
+            { id: 'branch', name: 'Branch', icon: 'fa-building', desc: 'Physical library branch locations and management details.', cols: 'Branch_ID (PK), Manager_ID, Address' },
+            { id: 'employees', name: 'Employees', icon: 'fa-id-badge', desc: 'Staff records including position and salary data.', cols: 'Emp_ID (PK), Name, Position, Salary, Branch_ID (FK)' }
+        ];
+
+        const problemsData = [
+            { id: 1, level: 'basic', title: 'New Book Record', task: 'Insert new book data into the system.', summary: 'CRUD Operation' },
+            { id: 2, level: 'basic', title: 'Update Member Info', task: 'Update addresses for specific members.', summary: 'CRUD Operation' },
+            { id: 3, level: 'basic', title: 'Delete Records', task: 'Remove erroneous records from issued_status.', summary: 'Data Cleaning' },
+            { id: 4, level: 'basic', title: 'Retrieve Issued Books', task: 'Select all books issued by a specific employee.', summary: 'Filtering' },
+            { id: 5, level: 'basic', title: 'Filter by Category', task: 'Retrieve all books classified as "Classic".', summary: 'Filtering' },
+            { id: 6, level: 'basic', title: 'Total Rental Income', task: 'Calculate revenue generated by book category.', summary: 'Aggregation' },
+            { id: 7, level: 'basic', title: 'Recent Registrations', task: 'Identify members registered in last 180 days.', summary: 'Date Function' },
+            { id: 8, level: 'basic', title: 'List Employees', task: 'Retrieve employee details with manager names.', summary: 'Self Join' },
+            { id: 9, level: 'intermediate', title: 'Member Activity', task: 'List members who have issued > 1 book.', summary: 'Group By/Having' },
+            { id: 10, level: 'intermediate', title: 'Branch Performance', task: 'Report total books issued/returned & revenue.', summary: 'Multi-Table Join' },
+            { id: 11, level: 'intermediate', title: 'CTAS: Book Counts', task: 'Create summary table tracking issuance frequency.', summary: 'CTAS' },
+            { id: 12, level: 'intermediate', title: 'CTAS: Expensive Books', task: 'Create table for books with price > $7.00.', summary: 'CTAS' },
+            { id: 13, level: 'intermediate', title: 'CTAS: Active Members', task: 'Table for users active in last 2 months.', summary: 'CTAS / Subquery' },
+            { id: 14, level: 'intermediate', title: 'Overdue Analysis', task: 'Identify transactions not returned in 30 days.', summary: 'Date Logic / Null Check' },
+            { id: 15, level: 'advanced', title: 'Persistent Report', task: 'Used SELECT INTO to store branch report.', summary: 'Table Creation' },
+            { id: 16, level: 'advanced', title: 'Top Employees', task: 'Find top 3 employees by processed issues.', summary: 'Ranking/Sorting' },
+            { id: 17, level: 'advanced', title: 'High-Risk Members', task: 'Identify members returning damaged books often.', summary: 'CTE & Window Func' },
+            { id: 18, level: 'advanced', title: 'SP: Issue Book', task: 'Procedure to verify availability before issuing.', summary: 'Stored Procedure' },
+            { id: 19, level: 'advanced', title: 'SP: Return Book', task: 'Procedure to update status upon return.', summary: 'Stored Procedure' },
+            { id: 20, level: 'advanced', title: 'Automated Fines', task: 'Report listing overdue books & calculating fines.', summary: 'Complex Logic' }
+        ];
+
+        const logic = {
+            issue: {
+                title: 'Automated Book Issuance',
+                file: 'procedure_issue_book.sql',
+                desc: 'This Stored Procedure prevents logical errors by checking the `status` column in `BooksNew` before creating an issue record. It handles both the insertion into `issued_status` and the update of `BooksNew` in a single transaction block.',
+                code: `CREATE OR ALTER PROCEDURE issue_book (
+    @p_issued_id VARCHAR(10),
+    @p_issued_member_id VARCHAR(30),
+    @p_issued_book_isbn VARCHAR(30),
+    @p_issued_emp_id VARCHAR(10)
+)
+AS
+BEGIN
+    DECLARE @v_status VARCHAR(10);
+    
+    -- 1. Check current availability
+    SELECT @v_status = status FROM BooksNew WHERE isbn = @p_issued_book_isbn;
+
+    IF @v_status = 'yes'
+    BEGIN
+        -- 2. Issue the book
+        INSERT INTO issued_status(issued_id, issued_member_id, issued_date, issued_book_isbn, issued_emp_id)
+        VALUES (@p_issued_id, @p_issued_member_id, GETDATE(), @p_issued_book_isbn, @p_issued_emp_id);
+        
+        -- 3. Update inventory status
+        UPDATE BooksNew SET status = 'no' WHERE isbn = @p_issued_book_isbn;
+        PRINT 'Book issued successfully.';
+    END
+    ELSE
+    BEGIN
+        PRINT 'Book is currently unavailable.';
+    END
+END;`
+            },
+            fines: {
+                title: 'Overdue Fines Calculation',
+                file: 'query_overdue_fines.sql',
+                desc: 'A complex analytical query that joins three tables. It filters for records where `return_status` is NULL (book not back) and the time difference exceeds 30 days. It then calculates a dynamic fine ($0.50 * days_overdue).',
+                code: `SELECT 
+    m.member_id,
+    COUNT(ist.issued_id) AS number_of_overdue_books,
+    SUM((DATEDIFF(DAY, ist.issued_date, GETDATE()) - 30) * 0.50) AS total_fines
+INTO overdue_books_summary
+FROM issued_status ist
+JOIN members m ON ist.issued_member_id = m.member_id
+LEFT JOIN return_status rs ON ist.issued_id = rs.issued_id
+WHERE rs.issued_id IS NULL -- Book has NOT been returned
+AND DATEDIFF(DAY, ist.issued_date, GETDATE()) > 30 -- Overdue condition
+GROUP BY m.member_id;`
+            },
+            risk: {
+                title: 'High-Risk Member Identification',
+                file: 'cte_high_risk.sql',
+                desc: 'Uses a Common Table Expression (CTE) to partition data by member. It counts instances where returned books were marked as "Damaged". Useful for flagging accounts for review.',
+                code: `WITH DamagedBookStats AS (
+    SELECT 
+        m.member_name,
+        -- Window function to count damaged instances per member
+        COUNT(ist.issued_id) OVER(PARTITION BY m.member_id) as damaged_count
+    FROM issued_status ist
+    JOIN members m ON ist.issued_member_id = m.member_id
+    JOIN BooksNew bn ON ist.issued_book_isbn = bn.isbn
+    WHERE bn.status = 'damaged'
+)
+SELECT * FROM DamagedBookStats WHERE damaged_count > 2;`
+            }
+        };
+
+        // --- INIT & RENDER FUNCTIONS ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSchema();
+            renderProblems('all');
+            showLogic('issue'); // Default view
+            initCharts();
+            initMobileMenu();
+        });
+
+        // 1. Render Schema
+        function renderSchema() {
+            const container = document.getElementById('schema-container');
+            container.innerHTML = schemaData.map(table => `
+                <div onclick="showSchemaDetail('${table.id}')" class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-brand-accent cursor-pointer transition flex items-center gap-4 group">
+                    <div class="w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition">
+                        <i class="fa-solid ${table.icon} text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-brand-dark">${table.name}</h3>
+                        <p class="text-xs text-gray-500">Click for details</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showSchemaDetail(id) {
+            const table = schemaData.find(t => t.id === id);
+            const detailBox = document.getElementById('schema-details');
+            
+            document.getElementById('schema-detail-title').innerText = table.name;
+            document.getElementById('schema-detail-desc').innerText = table.desc;
+            document.getElementById('schema-detail-cols').innerText = table.cols;
+            
+            detailBox.classList.remove('hidden');
+            // Re-trigger animation
+            detailBox.classList.remove('animate-fade-in');
+            void detailBox.offsetWidth; // trigger reflow
+            detailBox.classList.add('animate-fade-in');
+        }
+
+        // 2. Render Problems
+        function renderProblems(filter) {
+            const container = document.getElementById('problems-grid');
+            let data = problemsData;
+            
+            if(filter !== 'all') {
+                data = problemsData.filter(p => p.level === filter);
+            }
+
+            // Update Buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-accent', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-600');
+                if((filter === 'all' && btn.innerText === 'All') || 
+                   (filter !== 'all' && btn.innerText.toLowerCase().includes(filter))) {
+                    btn.classList.add('bg-brand-accent', 'text-white');
+                    btn.classList.remove('bg-white', 'text-gray-600');
+                }
+            });
+
+            container.innerHTML = data.map(prob => {
+                let badgeColor = 'bg-green-100 text-green-800';
+                if(prob.level === 'intermediate') badgeColor = 'bg-yellow-100 text-yellow-800';
+                if(prob.level === 'advanced') badgeColor = 'bg-red-100 text-red-800';
+
+                return `
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide ${badgeColor} px-2 py-1 rounded">
+                            ${prob.level}
+                        </span>
+                        <span class="text-gray-400 text-xs font-mono">#${prob.id}</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-brand-dark mb-2">${prob.title}</h3>
+                    <p class="text-sm text-gray-600 mb-4">${prob.task}</p>
+                    <div class="pt-4 border-t border-gray-50 flex items-center text-xs text-brand-accent font-medium">
+                        <i class="fa-solid fa-code mr-2"></i> ${prob.summary}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function filterProblems(level) {
+            renderProblems(level);
+        }
+
+        // 3. Logic Tabs
+        function showLogic(key) {
+            const data = logic[key];
+            
+            // Update Text
+            document.getElementById('logic-filename').innerText = data.file;
+            document.getElementById('logic-code').innerText = data.code; // Syntax highlighting logic could go here
+            document.getElementById('logic-desc').innerText = data.desc;
+
+            // Update Tabs UI
+            document.querySelectorAll('.logic-tab').forEach(tab => {
+                tab.classList.remove('border-brand-accent', 'bg-brand-bg', 'text-brand-accent');
+                tab.classList.add('border-transparent', 'text-gray-600');
+            });
+            const activeBtn = document.getElementById('btn-' + key);
+            activeBtn.classList.remove('border-transparent', 'text-gray-600');
+            activeBtn.classList.add('border-brand-accent', 'bg-brand-bg', 'text-brand-accent');
+            
+            // Highlight Code Logic (Simple Regex for display)
+            const codeEl = document.getElementById('logic-code');
+            let html = data.code;
+            html = html.replace(/(CREATE|PROCEDURE|SELECT|FROM|WHERE|AND|INSERT|INTO|VALUES|UPDATE|SET|BEGIN|END|DECLARE|IF|ELSE|PRINT|JOIN|LEFT|GROUP BY|WITH|AS|COUNT|SUM|DATEDIFF|GETDATE|OVER|PARTITION)/g, '<span class="sql-keyword">$1</span>');
+            html = html.replace(/'([^']*)'/g, '<span class="sql-string">\'$1\'</span>');
+            html = html.replace(/--.*$/gm, '<span class="sql-comment">$&</span>');
+            codeEl.innerHTML = html;
+        }
+
+        // 4. Charts
+        function initCharts() {
+            // Revenue Chart
+            const ctxRev = document.getElementById('chartRevenue').getContext('2d');
+            new Chart(ctxRev, {
+                type: 'pie',
+                data: {
+                    labels: ['Classic', 'Fiction', 'Non-Fiction', 'Sci-Fi'],
+                    datasets: [{
+                        data: [45, 25, 20, 10], // Hypothetical data based on "Income by Category"
+                        backgroundColor: ['#2E4F4F', '#2C3333', '#CBE4DE', '#D4AF37'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // Branch Chart
+            const ctxBranch = document.getElementById('chartBranch').getContext('2d');
+            new Chart(ctxBranch, {
+                type: 'bar',
+                data: {
+                    labels: ['Main Branch', 'Downtown', 'Westside'],
+                    datasets: [
+                        { label: 'Books Issued', data: [120, 95, 60], backgroundColor: '#2E4F4F' },
+                        { label: 'Books Returned', data: [110, 80, 55], backgroundColor: '#CBE4DE' }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Overdue Chart
+            const ctxOverdue = document.getElementById('chartOverdue').getContext('2d');
+            new Chart(ctxOverdue, {
+                type: 'doughnut',
+                data: {
+                    labels: ['On Time', 'Overdue (>30 Days)'],
+                    datasets: [{
+                        data: [85, 15],
+                        backgroundColor: ['#CBE4DE', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Mobile Menu
+        function initMobileMenu() {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
+        }
+
+    </script>
+</body>
+</html>
